@@ -62,7 +62,8 @@ export class OrdenServicioController {
     let ticketRepetido: Promise<ordenServicioEntity[]>;
 
     //Este es un dto que se encargara de recibir filtros de busqueda variados para una Orden de Servicio, en este caso solo se pasa el ID
-    let filtroOrdenServicioPorId: consulltarOrdenServicioPorFiltroDto;
+    // eslint-disable-next-line prefer-const
+    let filtroOrdenServicioPorId = new consulltarOrdenServicioPorFiltroDto();
 
     //Este es un dto que se encargara de crear el esqueleto de la Orden de Servicio a partir del ticket
     let crearOrdenServicioDto: Promise<crearOrdenServicioDto>;
@@ -70,6 +71,7 @@ export class OrdenServicioController {
     //La const itemTicket representa o guardara un ticket del JSON "listaTicketsGLPI". Es decir que guarda un objeto JSON
     for (const itemTicket of listaTicketsGLPI["data"]) {
       filtroOrdenServicioPorId.id_orden_servicio = itemTicket["2"];
+
       ticketRepetido = this.ordenServicioService.consultarOrdenesServicioPorFiltro(
         filtroOrdenServicioPorId
       );
