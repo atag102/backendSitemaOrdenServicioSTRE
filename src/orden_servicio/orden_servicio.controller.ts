@@ -1,4 +1,4 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Put, Param, ParseIntPipe, Body } from "@nestjs/common";
 import { OrdenServicioService } from "./Service/orden_servicio.service";
 import { crearOrdenServicioDto } from "./DTO/crearOrdenServicio.dto";
 import { estadoOrdenServicio } from "./Enum/enumEstadoOrdenServicio";
@@ -6,9 +6,15 @@ import { tipoOrdenServicio } from "./Enum/enumTipoOrdenServicio";
 import { ordenServicioEntity } from "./Entity/OrdenServicio.entity";
 import { consulltarOrdenServicioPorFiltroDto } from "./DTO/consulltarOrdenServicioPorFiltro.dto";
 import { GlpiApiService } from "./Service/glpi_api.service";
-
+import { editarOrdenServicioDto } from "./DTO/editarOrdenServicio.dto";
+import { UpdateResult } from "typeorm";
+import * as ldapjs from "ldapjs";
+import { SearchRequest, SearchOptions } from "ldapjs";
+import { resolve } from "path";
+import { rejects } from "assert";
 @Controller("ordenServicio")
 export class OrdenServicioController {
+  public usuarios: ldapjs.SearchEntryObject;
   constructor(
     private readonly ordenServicioService: OrdenServicioService,
     private readonly glpiApiService: GlpiApiService
@@ -17,8 +23,8 @@ export class OrdenServicioController {
   /*Obtiene el token para iniciar sesion, obtener listas de tickets del GLPI
   para luego crear las ordenes de servicio en la BD*/
 
-  @Get("crearOrdenesServicio")
-  async crearOrdenesServicioSinAwaitFor(): Promise<string> {
+  @Get("Crear")
+  async crearOrdenesServicio(): Promise<string> {
     //Guardar el token de inicio de sesion para consumir el API REST
     const token = await this.glpiApiService.obtenerToken();
 
@@ -41,11 +47,106 @@ export class OrdenServicioController {
       listaOrdenesServicioViejas
     );
 
+    this.glpiApiService.eliminarToken(token);
+
     return "Token=" + token + " " + resultadoMensaje;
+  }
+  /*
+  @Get("LDAP/:username/:password")
+  async obtenerUsuarios(
+    @Param("username") username: string,
+    @Param("password") password: string
+  ): Promise<string> {
+    let jsonObject = "";
+    // eslint-disable-next-line prefer-const
+    let client = ldapjs.createClient({
+      url: "ldap://latccsdc02:389"
+    });
+    try {
+      return new Promise((resolve, rejects) => {
+        client.bind("Soporte TI", "Serpapro22", (err) => {
+          if (err) {
+            console.log("ocurrio algo=" + err);
+          } else {
+            console.log("Exito");
+            client.search(
+              "OU=BrinksVZ,OU=z_LATAM,DC=latam,DC=brinksgbl,DC=com",
+              {
+                filter: `(sAMAccountName=${username})`,
+                scope: "sub",
+                attributes: ["sAMAccountName"]
+              },
+              function (err, res) {
+                let asdf: string;
+                if (err) {
+                  client.unbind((err) => {
+                    if (err) {
+                      resolve("no se pudo");
+                    }
+                  });
+                  console.log("error");
+                  rejects(err);
+                } else {
+                  res.on("searchRequest", (searchRequest) => {
+                    console.log("searchRequest: ", searchRequest.messageID);
+                  });
+                  res.on("searchEntry", (entry) => {
+                    asdf = JSON.stringify(entry.object);
+                    jsonObject = JSON.parse(asdf);
+                  });
+                  res.on("searchReference", (referral) => {
+                    console.log("referral: " + referral.uris.join());
+                  });
+                  res.on("error", (err) => {
+                    console.error("error: " + err.message);
+                  });
+                  res.on("end", (result) => {
+                    console.log("status: " + result.status);
+                    client.unbind((err) => {
+                      if (err) {
+                        resolve("no se pudo");
+                      }
+                    });
+                    // eslint-disable-next-line prefer-const
+                    let client2 = ldapjs.createClient({
+                      url: "ldap://latccsdc02:389"
+                    });
+                    if (jsonObject["dn"] == undefined) {
+                      resolve("jaja eroro");
+                    } else {
+                      console.log(jsonObject["dn"]);
+                      client2.bind(jsonObject["dn"], password, (err) => {
+                        if (err) {
+                          resolve("No se que paso en la coneccion");
+                        } else {
+                          resolve("Si existe el usuario");
+                        }
+                      });
+                    }
+                  });
+                }
+              }
+            );
+          }
+        });
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+*/
+  @Put("Actualizar/:IdOrdenServicio")
+  actualizarOrdenServicio(
+    @Param("IdOrdenServicio", ParseIntPipe) idOrdenServicio: number,
+    @Body() cambiosEnOrdenServicio: editarOrdenServicioDto
+  ): Promise<UpdateResult> {
+    return this.ordenServicioService.updateOrdenServicio(
+      idOrdenServicio,
+      cambiosEnOrdenServicio
+    );
   }
 
   //Casters
-
   async castPromiseToPromiseListCrearOrdenServicioDto(
     promesaParaTransformar: Promise<JSON>,
     tokenInitSession: string

@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, UpdateResult } from "typeorm";
 import { ordenServicioEntity } from "../Entity/OrdenServicio.entity";
 import { crearOrdenServicioDto } from "../DTO/crearOrdenServicio.dto";
 import { consulltarOrdenServicioPorFiltroDto } from "../DTO/consulltarOrdenServicioPorFiltro.dto";
+import { editarOrdenServicioDto } from "../DTO/editarOrdenServicio.dto";
 
 @Injectable()
 export class OrdenServicioService {
@@ -47,4 +48,23 @@ export class OrdenServicioService {
   ): Promise<ordenServicioEntity[]> {
     return this.ordenServicioRepository.find({ where: filtros });
   }
+
+  //Esta funcion se encarga de editar una Orden de servicio
+
+  async updateOrdenServicio(
+    idOrdenServicio: number,
+    editarOrdenServicioDto: editarOrdenServicioDto
+  ): Promise<UpdateResult> {
+    return this.ordenServicioRepository.update(
+      { id_orden_servicio: idOrdenServicio },
+      editarOrdenServicioDto
+    );
+  }
+
+  /*
+
+  async updateLugar(Lugarid: number, lugar: UpdateLugarDto):Promise<UpdateResult>{
+        return this.lugarRepository.update({id_lugar:Lugarid},lugar);
+    }
+    */
 }

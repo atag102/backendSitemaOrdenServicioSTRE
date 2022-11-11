@@ -22,6 +22,22 @@ export class GlpiApiService {
     return data["session_token"];
   }
 
+  //Esta funciion te permite eliminar un Token
+  async eliminarToken(token: string): Promise<string> {
+    const headersRequest = {
+      "Content-Type": "application/json",
+      "Session-Token": token
+    };
+
+    const { data } = await firstValueFrom(
+      this.httpService.get("http://10.66.4.108:8888/glpi/apirest.php/killSession", {
+        headers: headersRequest
+      })
+    );
+
+    return data["session_token"];
+  }
+
   //Obtener la lista entera de los tickets del GLPI cumplliendo con ciertos parametros
   async obtenerTicketsGLPI(tokenSession: string): Promise<JSON> {
     const headersRequest = {
