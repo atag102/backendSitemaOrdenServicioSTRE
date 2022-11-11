@@ -51,6 +51,12 @@ export class OrdenServicioController {
 
     return "Token=" + token + " " + resultadoMensaje;
   }
+
+  @Get("Obtener/Lista")
+  obtenerListaOredenesServicio(): Promise<ordenServicioEntity[]> {
+    return this.ordenServicioService.findAllOrdenesServicio();
+  }
+
   /*
   @Get("LDAP/:username/:password")
   async obtenerUsuarios(
