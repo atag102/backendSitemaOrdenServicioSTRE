@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, ParseIntPipe, Body } from "@nestjs/common";
+import { Controller, Get, Put, Param, ParseIntPipe, Body, Post } from "@nestjs/common";
 import { OrdenServicioService } from "./Service/orden_servicio.service";
 import { crearOrdenServicioDto } from "./DTO/crearOrdenServicio.dto";
 import { estadoOrdenServicio } from "./Enum/enumEstadoOrdenServicio";
@@ -9,9 +9,6 @@ import { GlpiApiService } from "./Service/glpi_api.service";
 import { editarOrdenServicioDto } from "./DTO/editarOrdenServicio.dto";
 import { UpdateResult } from "typeorm";
 import * as ldapjs from "ldapjs";
-import { SearchRequest, SearchOptions } from "ldapjs";
-import { resolve } from "path";
-import { rejects } from "assert";
 @Controller("ordenServicio")
 export class OrdenServicioController {
   public usuarios: ldapjs.SearchEntryObject;
@@ -55,6 +52,15 @@ export class OrdenServicioController {
   @Get("Obtener/Lista")
   obtenerListaOredenesServicio(): Promise<ordenServicioEntity[]> {
     return this.ordenServicioService.findAllOrdenesServicio();
+  }
+
+  @Post("Obtener/Filtro")
+  obtenerOredenServicioPorFiltro(
+    @Body() filtradoOrdenServicio: consulltarOrdenServicioPorFiltroDto
+  ): Promise<ordenServicioEntity[]> {
+    return this.ordenServicioService.consultarOrdenesServicioPorFiltro(
+      filtradoOrdenServicio
+    );
   }
 
   /*
