@@ -6,6 +6,7 @@ import { ConfigModule } from "@nestjs/config";
 import { OrdenServicioController } from "./orden_servicio/orden_servicio.controller";
 import { OrdenServicioService } from "./orden_servicio/Service/orden_servicio.service";
 import { OrdenServicioModule } from "./orden_servicio/orden_servicio.module";
+import { LdapModule } from "./ldap/ldap.module";
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { OrdenServicioModule } from "./orden_servicio/orden_servicio.module";
         encrypt: false
       }
     }),
-    OrdenServicioModule
+    OrdenServicioModule,
+    LdapModule
   ],
   controllers: [AppController],
   providers: [AppService]
