@@ -18,23 +18,51 @@ export class OrdenServicioService {
     ListordenServicioDTO: crearOrdenServicioDto[],
     ListaOrdenesServicioEntityExistentes: ordenServicioEntity[]
   ): Promise<string> {
-    let respuesta: string;
+    try {
+      // eslint-disable-next-line prefer-const
+      let listaOrdenesServiciosRegistrados: ordenServicioEntity[] = [];
+      let respuesta: string;
 
-    // Este if verifica si ya hay ordenes de servicio en la BD
-    if (ListordenServicioDTO.length != 0) {
-      for (const ordenServicio of ListordenServicioDTO) {
-        const ordenServicioEntity: ordenServicioEntity =
-          this.ordenServicioRepository.create(ordenServicio);
+      // Este if verifica si ya hay ordenes de servicio en la BD
+      //console.log(ListordenServicioDTO);
+      if (ListaOrdenesServicioEntityExistentes.length == 0) {
+        for (const ordenServicio of ListordenServicioDTO) {
+          const ordenServicioEntity: ordenServicioEntity =
+            this.ordenServicioRepository.create(ordenServicio);
 
-        this.ordenServicioRepository.save(ordenServicioEntity);
+          this.ordenServicioRepository.save(ordenServicioEntity);
+        }
+
+        respuesta = "Se registraron las OS ";
+      } else {
+        let contador = 0;
+        //console.log(ListordenServicioDTO);
+        for (const ordenServicio of ListordenServicioDTO) {
+          if (ordenServicio == undefined) {
+            console.log("Esta OS ya existe=" + ordenServicio);
+          } else {
+            contador = contador + 1;
+            console.log("Esta OS no existe=" + ordenServicio);
+            const ordenServicioEntity: ordenServicioEntity =
+              this.ordenServicioRepository.create(ordenServicio);
+            this.ordenServicioRepository.save(ordenServicioEntity);
+            listaOrdenesServiciosRegistrados.push(ordenServicioEntity);
+          }
+        }
+        console.log(contador);
+        if (contador == 0) {
+          console.log("Lista OS vieja tiene=" + ListaOrdenesServicioEntityExistentes);
+          respuesta = "No se registraron las OS porque ya estan repetidas ";
+        } else if (contador > 0) {
+          respuesta =
+            "Se registraron los siguientes registros: \n" +
+            listaOrdenesServiciosRegistrados;
+        }
       }
-
-      respuesta = "Se registraron las OS ";
-    } else {
-      console.log("Lista OS vieja tiene=" + ListaOrdenesServicioEntityExistentes);
-      respuesta = "No se registraron las OS porque ya estan repetidas ";
+      return respuesta;
+    } catch (error) {
+      console.log(error);
     }
-    return respuesta;
   }
 
   //Esta funcion se encarga de obtener una lista de ordenes de servicio de la BD

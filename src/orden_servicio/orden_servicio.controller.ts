@@ -22,31 +22,36 @@ export class OrdenServicioController {
 
   @Get("Crear")
   async crearOrdenesServicio(): Promise<string> {
-    //Guardar el token de inicio de sesion para consumir el API REST
-    const token = await this.glpiApiService.obtenerToken();
+    try {
+      //Guardar el token de inicio de sesion para consumir el API REST
+      const token = await this.glpiApiService.obtenerToken();
 
-    //Obtener una lista de los tickets generados en el GLPI
-    const listaTcketsGLPI = this.glpiApiService.obtenerTicketsGLPI(token);
+      //Obtener una lista de los tickets generados en el GLPI
+      const listaTcketsGLPI = await this.glpiApiService.obtenerTicketsGLPI(token);
 
-    //Crear una lista del DTO crearOrdenServicioDto a partir de los tickets del GLPI
-    const listaOrdenServicioDto = await Promise.all(
-      await this.castPromiseToPromiseListCrearOrdenServicioDto(listaTcketsGLPI, token)
-    );
+      //Crear una lista del DTO crearOrdenServicioDto a partir de los tickets del GLPI
+      const listaOrdenServicioDto = await Promise.all(
+        await this.castPromiseToPromiseListCrearOrdenServicioDto(listaTcketsGLPI, token)
+      );
+      console.log(listaOrdenServicioDto);
+      //Obtener una lista de Ordenes de servicio de la base de datos
+      const listaOrdenesServicioViejas =
+        await this.ordenServicioService.findAllOrdenesServicio();
+      //console.log(listaOrdenesServicioViejas);
 
-    //Obtener una lista de Ordenes de servicio de la base de datos
-    const listaOrdenesServicioViejas =
-      await this.ordenServicioService.findAllOrdenesServicio();
+      //Guardar la lista de ordenes de servicio en la BD. Como resultado se recibe un string.
 
-    //Guardar la lista de ordenes de servicio en la BD. Como resultado se recibe un string.
+      const resultadoMensaje = await this.ordenServicioService.insertarOrdenServicioALaBd(
+        listaOrdenServicioDto,
+        listaOrdenesServicioViejas
+      );
 
-    const resultadoMensaje = await this.ordenServicioService.insertarOrdenServicioALaBd(
-      listaOrdenServicioDto,
-      listaOrdenesServicioViejas
-    );
+      this.glpiApiService.eliminarToken(token);
 
-    this.glpiApiService.eliminarToken(token);
-
-    return "Token=" + token + " " + resultadoMensaje;
+      return "Token=" + token + " " + resultadoMensaje;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   @Get("Obtener/Lista")
@@ -76,7 +81,7 @@ export class OrdenServicioController {
 
   //Casters
   async castPromiseToPromiseListCrearOrdenServicioDto(
-    promesaParaTransformar: Promise<JSON>,
+    promesaParaTransformar: JSON,
     tokenInitSession: string
   ): Promise<Promise<crearOrdenServicioDto>[]> {
     //Lista de DTOs de las ordenes de servicio que se generan a partir de los tickets del GLPI
@@ -85,7 +90,8 @@ export class OrdenServicioController {
     /*Lista de tickets del GLPI apartir de una de una Promesa<JSON>. Es del tipo JSON, la promesa que se espera 
     es un JSON que tiene la estructura de un array que trae varios objetos JSON.Es decir:
     {[{"var1":"valu1"... }]}*/
-    const listaTicketsGLPI = await promesaParaTransformar;
+
+    const listaTicketsGLPI = promesaParaTransformar;
 
     //Guardara el ticket que se buscara por id y se utilizara para ver si hay una Orden de Servicio con ese ID
     let ticketRepetido: Promise<ordenServicioEntity[]>;
@@ -113,11 +119,10 @@ export class OrdenServicioController {
 
       //Esta validacion verifica si el esqueleto del dto se creo exitosamente entonces recibe un objeto Dto que no es undifined,
       //si al verificar es undifined no lo agrega a la lista
-      if (crearOrdenServicioDto["data"] != undefined) {
-        listaOrdenServicioDTO.push(crearOrdenServicioDto);
-      }
+      listaOrdenServicioDTO.push(crearOrdenServicioDto);
     }
-    return listaOrdenServicioDTO;
+
+    return this.verificarElValueDelPromise(listaOrdenServicioDTO);
   }
 
   //Funciones especiales
@@ -208,5 +213,15 @@ export class OrdenServicioController {
       );
     }
     return undefined;
+  }
+
+  async verificarElValueDelPromise(
+    promesaValidar: Promise<crearOrdenServicioDto>[]
+  ): Promise<Promise<crearOrdenServicioDto>[]> {
+    return promesaValidar.map(async (value) => {
+      if (value != undefined) {
+        return await value;
+      }
+    });
   }
 }
